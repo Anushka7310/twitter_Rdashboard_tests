@@ -1,0 +1,69 @@
+---
+title: "#RSTAT Tweet Analysis"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(wordcloud2)
+library(tm)
+library(dplyr)
+library(crosstalk)
+library(plotly)
+library(lubridate)
+
+```
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### CrossTalk with plotly
+
+```{r}
+tweets = rtweet::read_twitter_csv('tweets_database.csv')
+tweets$days <- day(as.POSIXlt(tweets$created_at))
+
+# Wrap data frame in SharedData
+sd <- SharedData$new(tweets)
+
+# Create a filter input
+filter_slider("time", "Time", sd, column=~days)
+
+# Use SharedData like a dataframe with Crosstalk-enabled widgets
+ plot_ly(
+   data = sd,
+  x=~lang,
+  width = "100px",
+  height = "100px"
+)
+
+```
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### WordCloud
+
+```{r}
+data <- rtweet::read_twitter_csv('tweets_database.csv')
+#Create a vector containing only the text
+text <- data$text
+# Create a corpus  
+docs <- Corpus(VectorSource(text))
+docs <- docs %>%
+  tm_map(removeNumbers) %>%
+  tm_map(removePunctuation) %>%
+  tm_map(stripWhitespace)
+docs <- tm_map(docs, content_transformer(tolower))
+docs <- tm_map(docs, removeWords, stopwords("english"))
+dtm <- TermDocumentMatrix(docs) 
+matrix <- as.matrix(dtm) 
+words <- sort(rowSums(matrix),decreasing=TRUE) 
+df <- data.frame(word = names(words),freq=words)
+
+wordcloud2(data=df, size=1.6, color='random-dark')
+```
+
