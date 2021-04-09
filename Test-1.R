@@ -27,6 +27,7 @@ if(!file.exists("tweets_database.csv")){
   tweets = rtweet::read_twitter_csv('tweets_database.csv')
 }
 
+
 #Get 18000 latest tweets regarding #rstats
 rt <- search_tweets(
   "#rstats", n = 18000, include_rts = FALSE
